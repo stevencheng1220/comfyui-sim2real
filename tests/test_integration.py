@@ -6,7 +6,7 @@ import numpy as np
 import pytest
 import torch
 
-from nodes import LoadDepthNPY, SimDepthToControlNet
+from comfyui_sim2real.nodes import LoadDepthNPY, SimDepthToControlNet
 
 
 class TestTask14Integration:
