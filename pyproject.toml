@@ -1,7 +1,11 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
 [project]
 name = "comfyui-sim2real"
 version = "0.1.0"
-description = "ComfyUI custom nodes for sim-to-real depth conditioning"
+description = "ComfyUI custom nodes for sim-to-real conditioning"
 readme = "README.md"
 requires-python = ">=3.10"
 license = {text = "MIT"}
@@ -10,15 +14,18 @@ authors = [
 ]
 keywords = ["comfyui", "controlnet", "depth", "sim2real", "isaac-sim"]
 
-dependencies = [
-    "torch>=2.0.0",
-    "numpy>=1.24.0",
-]
+dependencies = []  # ComfyUI provides torch/numpy/PIL at runtime
 
 [project.optional-dependencies]
 dev = [
     "pytest>=7.0.0",
+    "torch>=2.0.0",
+    "numpy>=1.24.0",
+    "pillow>=10.0.0",
 ]
 
-# Note: No [build-system] or [tool.hatch.build] needed.
-# ComfyUI custom nodes are installed via git clone, not pip install.
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+
+[tool.hatch.build.targets.wheel]
+packages = ["comfyui_sim2real"]
