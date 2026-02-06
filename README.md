@@ -4,13 +4,13 @@ ComfyUI custom nodes for sim-to-real depth conditioning with ControlNet.
 
 ## Installation
 
-1. Clone into ComfyUI custom_nodes directory:
-   ```bash
-   cd ComfyUI/custom_nodes
-   git clone <repository-url> comfyui-sim2real
-   ```
+Clone into ComfyUI custom_nodes directory:
+```bash
+cd ComfyUI/custom_nodes
+git clone <repository-url> comfyui-sim2real
+```
 
-2. Restart ComfyUI
+Restart ComfyUI. No additional dependencies required.
 
 ## Nodes
 
@@ -23,6 +23,16 @@ Loads metric depth maps from NumPy .npy files (as exported by Isaac Sim).
 
 **Output:**
 - `depth` (IMAGE): Depth tensor [1, H, W, 1] in meters
+
+### LoadSegmentationPNG
+
+Loads 16-bit PNG instance segmentation maps.
+
+**Inputs:**
+- `file_path` (STRING): Path to 16-bit PNG segmentation file
+
+**Output:**
+- `segmentation` (SEGMENTATION): Segmentation tensor [1, H, W] with int32 instance IDs
 
 ### SimDepthToControlNet
 
@@ -42,6 +52,24 @@ Converts metric depth maps (float32 meters) to ControlNet-compatible format.
 LoadDepthNPY (depth.npy) → SimDepthToControlNet → Apply ControlNet (depth model)
 ```
 
+## Development Setup
+
+```bash
+# Clone the repository
+git clone <repository-url> comfyui-sim2real
+cd comfyui-sim2real
+
+# Create virtual environment
+python -m venv .venv
+source .venv/bin/activate
+
+# Install in editable mode with dev dependencies
+pip install -e ".[dev]"
+
+# Run tests
+pytest
+```
+
 ## No External Dependencies
 
-This package is self-contained. It does not require any external ComfyUI extensions.
+This package is self-contained. ComfyUI provides torch, numpy, and PIL at runtime.
