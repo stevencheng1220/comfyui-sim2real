@@ -1,6 +1,5 @@
 """Unit tests for comfyui-sim2real nodes."""
 
-from pathlib import Path
 
 import numpy as np
 import pytest

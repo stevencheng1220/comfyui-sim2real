@@ -1,6 +1,5 @@
 """Integration tests with simulated Task 1.4 output."""
 
-from pathlib import Path
 
 import numpy as np
 import pytest
