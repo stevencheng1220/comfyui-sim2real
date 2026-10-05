@@ -30,6 +30,7 @@ line-length = 100
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+pythonpath = ["src"]
 
 [tool.hatch.build.targets.wheel]
-packages = ["comfyui_sim2real"]
+packages = ["src/comfyui_sim2real"]

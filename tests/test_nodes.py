@@ -123,7 +123,7 @@ class TestSimDepthToControlNet:
 
 
 class TestEndToEnd:
-    """End-to-end tests combining both nodes."""
+    """End-to-end tests chaining LoadDepthNPY into SimDepthToControlNet."""
 
     def test_load_and_normalize(self, tmp_path):
         """Test loading NPY and normalizing in sequence."""
@@ -221,16 +221,16 @@ class TestLoadSegmentationPNG:
             node.load(str(file_path))
 
     def test_roundtrip_matches_generator_export_format(self, node, tmp_path):
-        """Test round-trip with generator's export format (exporter.py:208).
+        """Test round-trip with the isaac-simulator FrameExporter segmentation format.
 
-        This test verifies compatibility with isaac-simulator's FrameExporter,
-        which exports segmentation using:
+        FrameExporter (generator/src/isaac_simulator_generator/exporter.py in
+        isaac-simulator) exports segmentation using:
             Image.fromarray(seg_uint16, mode="I;16").save(path)
         """
         from PIL import Image
 
         # Simulate generator export: int32 -> clip to uint16 -> save as I;16
-        # (matches exporter.py lines 206-208)
+        # (mirrors FrameExporter's int32 -> uint16 clip before the I;16 save)
         original_int32 = np.array([[0, 1, 100], [1000, 10000, 65535]], dtype=np.int32)
         seg_uint16 = np.clip(original_int32, 0, 65535).astype(np.uint16)
 
