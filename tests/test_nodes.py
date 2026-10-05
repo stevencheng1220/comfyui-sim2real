@@ -167,7 +167,7 @@ class TestLoadSegmentationPNG:
         seg_data[5:15, 40:60] = 65535  # Max uint16 value
 
         file_path = tmp_path / "segmentation.png"
-        Image.fromarray(seg_data, mode="I;16").save(file_path)
+        Image.fromarray(seg_data).save(file_path)
 
         return file_path, seg_data
 
@@ -215,7 +215,7 @@ class TestLoadSegmentationPNG:
         # Create 8-bit PNG
         img_data = np.zeros((64, 64), dtype=np.uint8)
         file_path = tmp_path / "8bit.png"
-        Image.fromarray(img_data, mode="L").save(file_path)
+        Image.fromarray(img_data).save(file_path)
 
         with pytest.raises(ValueError, match="16-bit grayscale"):
             node.load(str(file_path))
@@ -225,7 +225,7 @@ class TestLoadSegmentationPNG:
 
         FrameExporter (generator/src/isaac_simulator_generator/exporter.py in
         isaac-simulator) exports segmentation using:
-            Image.fromarray(seg_uint16, mode="I;16").save(path)
+            Image.fromarray(seg_uint16).save(path)
         """
         from PIL import Image
 
@@ -235,7 +235,7 @@ class TestLoadSegmentationPNG:
         seg_uint16 = np.clip(original_int32, 0, 65535).astype(np.uint16)
 
         file_path = tmp_path / "generator_export.png"
-        Image.fromarray(seg_uint16, mode="I;16").save(file_path)
+        Image.fromarray(seg_uint16).save(file_path)
 
         # Load through node
         result = node.load(str(file_path))
