@@ -1,6 +1,8 @@
-"""Integration tests with simulated Task 1.4 output."""
+"""Integration tests over depth frames in the isaac-simulator FrameExporter layout.
 
-from pathlib import Path
+FrameExporter writes one float32-meters array per frame to ``depth/frame_NNNNNN.npy``.
+"""
+
 
 import numpy as np
 import pytest
@@ -9,13 +11,13 @@ import torch
 from comfyui_sim2real.nodes import LoadDepthNPY, SimDepthToControlNet
 
 
-class TestTask14Integration:
-    """Integration tests simulating Task 1.4 output format."""
+class TestExportedDepthPipeline:
+    """Load exported .npy depth frames and normalize them for ControlNet."""
 
     @pytest.fixture
-    def task_14_output_dir(self, tmp_path):
-        """Create a directory structure mimicking Task 1.4 output."""
-        # Simulate Task 1.4 nested directory structure
+    def exported_depth_frame(self, tmp_path):
+        """Write one depth frame where FrameExporter puts it: depth/frame_000001.npy."""
+        # FrameExporter writes depth frames under <output_dir>/depth/
         depth_dir = tmp_path / "depth"
         depth_dir.mkdir()
 
@@ -28,17 +30,17 @@ class TestTask14Integration:
         # Closer region (climbing wall)
         depth_data[300:700, 400:600] = np.random.uniform(2.0, 3.5, (400, 200))
 
-        # Save as .npy (Task 1.4 format)
+        # float32 meters, one .npy per frame
         depth_path = depth_dir / "frame_000001.npy"
         np.save(depth_path, depth_data)
 
         return tmp_path, depth_path, depth_data
 
-    def test_full_pipeline_with_task_14_output(self, task_14_output_dir):
-        """Test complete pipeline: Load Task 1.4 .npy → Normalize for ControlNet."""
-        tmp_path, depth_path, original_depth = task_14_output_dir
+    def test_full_pipeline_with_exported_frame(self, exported_depth_frame):
+        """Test complete pipeline: load an exported .npy frame → normalize for ControlNet."""
+        tmp_path, depth_path, original_depth = exported_depth_frame
 
-        # Step 1: Load depth using LoadDepthNPY (as exported by Task 1.4)
+        # Step 1: Load depth using LoadDepthNPY (FrameExporter .npy output)
         loader = LoadDepthNPY()
         depth_tensor = loader.load(str(depth_path))[0]
 
@@ -52,12 +54,12 @@ class TestTask14Integration:
         )
 
         # Step 2: Convert to ControlNet format
-        # Use realistic near/far for climbing scene (matches design docs)
+        # Use the node's default near/far clipping planes
         normalizer = SimDepthToControlNet()
         controlnet_depth = normalizer.convert(
             depth_tensor,
-            near=0.1,  # Default from TECH_DOC_1.5
-            far=10.0   # Default from TECH_DOC_1.5
+            near=0.1,  # SimDepthToControlNet default
+            far=10.0   # SimDepthToControlNet default
         )[0]
 
         # Verify output format
@@ -81,11 +83,11 @@ class TestTask14Integration:
             "Closer objects (wall) should be brighter than far objects"
 
     def test_batch_export_simulation(self, tmp_path):
-        """Test processing multiple frames as Task 1.4 would export them."""
+        """Test processing several frames named as FrameExporter writes them."""
         depth_dir = tmp_path / "depth"
         depth_dir.mkdir()
 
-        # Simulate Task 1.4 exporting multiple frames
+        # Write frame_000001.npy ... frame_000005.npy, FrameExporter's naming
         num_frames = 5
         frame_ids = []
 
@@ -146,8 +148,8 @@ class TestTask14Integration:
         assert foreground.mean() > background.mean(), \
             "Foreground should be brighter than background after inversion"
 
-        # Background beyond far clipping should all be black (0.0)
-        # (original values 10-20m get clipped to 10m, normalized to 0.0, inverted to 1.0, then 1-1=0)
+        # Background spans 8-20m; values at or beyond far (10m) clip to 10m,
+        # normalize to 1.0 and invert to 0.0 (black)
         far_pixels = controlnet[0, 0, 256:, 0]  # Background pixels
         # Many should be close to 0 (far clipping)
         assert (far_pixels < 0.1).sum() > 0, \

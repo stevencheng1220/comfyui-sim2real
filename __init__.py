@@ -1,7 +1,10 @@
-"""ComfyUI custom nodes for sim-to-real conditioning.
+"""ComfyUI entry shim for the sim-to-real conditioning nodes.
 
-This module is the entry point for ComfyUI's node loading.
-The actual implementation is in the comfyui_sim2real subpackage.
+ComfyUI imports ``custom_nodes/<node dir>/__init__.py`` by file path and registers the
+nodes listed in NODE_CLASS_MAPPINGS and NODE_DISPLAY_NAME_MAPPINGS. It does not add the
+node directory to sys.path, so the implementation in src/comfyui_sim2real must be
+pip-installed into ComfyUI's Python environment (``pip install -e .``) for the import
+below to resolve.
 """
 
 from comfyui_sim2real import (
