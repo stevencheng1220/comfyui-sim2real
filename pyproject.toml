@@ -19,7 +19,7 @@ dependencies = []  # ComfyUI provides torch/numpy/PIL at runtime
 [project.optional-dependencies]
 dev = [
     "pytest>=7.0.0",
-    "ruff>=0.15,<0.16",
+    "ruff>=0.16,<0.17",
     "torch>=2.0.0",
     "numpy>=1.24.0",
     "pillow>=10.0.0",

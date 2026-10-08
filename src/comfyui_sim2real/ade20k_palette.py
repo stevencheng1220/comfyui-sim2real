@@ -49,7 +49,6 @@ _ADE20K_PALETTE_150 = [
     [184, 255, 0], [0, 133, 255], [255, 214, 0], [25, 194, 194],
     [102, 255, 0], [92, 0, 255],
 ]
-# fmt: on
 
 # Class names for ADE20K (classes 1-150, from objectInfo150.csv)
 # Included for documentation and debugging purposes
@@ -86,6 +85,7 @@ ADE20K_CLASS_NAMES = [
     "pier", "crt", "plate", "monitor", "bulletin",
     "shower", "radiator", "glass", "clock", "flag",
 ]
+# fmt: on
 
 # Number of semantic classes (excluding background)
 NUM_CLASSES = 150
@@ -108,9 +108,7 @@ def get_color(class_id: int) -> tuple[int, int, int]:
         ValueError: If class_id is out of range [0, 150].
     """
     if not 0 <= class_id <= NUM_CLASSES:
-        raise ValueError(
-            f"ADE20K class ID must be in range [0, {NUM_CLASSES}], got {class_id}"
-        )
+        raise ValueError(f"ADE20K class ID must be in range [0, {NUM_CLASSES}], got {class_id}")
     return tuple(ADE20K_PALETTE[class_id])
 
 
@@ -127,9 +125,7 @@ def get_class_name(class_id: int) -> str:
         ValueError: If class_id is out of range [0, 150].
     """
     if not 0 <= class_id <= NUM_CLASSES:
-        raise ValueError(
-            f"ADE20K class ID must be in range [0, {NUM_CLASSES}], got {class_id}"
-        )
+        raise ValueError(f"ADE20K class ID must be in range [0, {NUM_CLASSES}], got {class_id}")
     return ADE20K_CLASS_NAMES[class_id]
 
 
