@@ -290,7 +290,7 @@ class InstanceSegToADE20K:
         """
         import json
 
-        from .ade20k_palette import ADE20K_PALETTE, NUM_CLASSES
+        from .constants import ADE20K_PALETTE, NUM_CLASSES
 
         # Validate input tensor shape and dtype
         if segmentation.dim() != 3:

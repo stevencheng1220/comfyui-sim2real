@@ -42,8 +42,8 @@ root_package = "comfyui_sim2real"
 name = "Package layers"
 type = "layers"
 layers = [
-    "comfyui_sim2real.nodes",
-    "comfyui_sim2real.ade20k_palette",
+    "comfyui_sim2real.service",
+    "comfyui_sim2real.constants",
 ]
 
 [tool.pytest.ini_options]
