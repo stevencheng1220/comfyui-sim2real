@@ -1,2 +1,0 @@
-# torch, numpy and Pillow are provided by the ComfyUI runtime.
-# Install this package itself with `pip install -e .` (see README).

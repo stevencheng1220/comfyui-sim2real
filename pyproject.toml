@@ -18,7 +18,8 @@ dependencies = []  # ComfyUI provides torch/numpy/PIL at runtime
 
 [project.optional-dependencies]
 dev = [
-    "pytest>=7.0.0",
+    "import-linter>=2.15",
+    "pytest>=8.0",
     "ruff>=0.16,<0.17",
     "torch>=2.0.0",
     "numpy>=1.24.0",
@@ -30,6 +31,20 @@ line-length = 100
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "UP", "B", "SIM"]
+
+[tool.importlinter]
+root_package = "comfyui_sim2real"
+
+# Higher layers may import lower ones, never the reverse: the nodes read the ADE20K
+# palette table, which imports nothing. torch, numpy and Pillow are compute libraries
+# ComfyUI supplies, not an outside service, so there is no vendor contract.
+[[tool.importlinter.contracts]]
+name = "Package layers"
+type = "layers"
+layers = [
+    "comfyui_sim2real.nodes",
+    "comfyui_sim2real.ade20k_palette",
+]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
