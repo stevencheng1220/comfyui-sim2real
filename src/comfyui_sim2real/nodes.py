@@ -77,7 +77,9 @@ class SimDepthToControlNet:
                     "min": 0.0,
                     "max": 1000.0,
                     "step": 0.1,
-                    "tooltip": "Near clipping distance in meters. Depths closer than this become white.",
+                    "tooltip": (
+                        "Near clipping distance in meters. Depths closer than this become white."
+                    ),
                 }),
                 "far": ("FLOAT", {
                     "default": 10.0,
@@ -93,7 +95,9 @@ class SimDepthToControlNet:
     RETURN_NAMES = ("depth_controlnet",)
     FUNCTION = "convert"
     CATEGORY = "sim2real"
-    DESCRIPTION = "Converts metric depth (meters) to ControlNet depth format (white=near, black=far)"
+    DESCRIPTION = (
+        "Converts metric depth (meters) to ControlNet depth format (white=near, black=far)"
+    )
 
     def convert(
         self,
@@ -307,10 +311,10 @@ class InstanceSegToADE20K:
         for instance_id_str, class_id in mapping_raw.items():
             try:
                 instance_id = int(instance_id_str)
-            except ValueError:
+            except ValueError as exc:
                 raise ValueError(
                     f"Instance ID must be an integer, got: {instance_id_str!r}"
-                )
+                ) from exc
 
             if not isinstance(class_id, int):
                 raise ValueError(
