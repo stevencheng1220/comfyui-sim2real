@@ -1,117 +1,104 @@
 # comfyui-sim2real
 
-ComfyUI custom nodes that turn simulator depth and instance segmentation into ControlNet
-conditioning.
+Adds ComfyUI nodes that turn simulator depth and instance segmentation into ControlNet conditioning, so a rendered scene can steer photoreal generation.
 
-## Installation
+## Requirements
 
-Requires Python 3.12+. Clone into ComfyUI's `custom_nodes` directory, then install the package
-into the Python environment that runs ComfyUI:
+- A ComfyUI install running Python 3.12+, which supplies torch, NumPy, and Pillow.
+- Simulator exports: metric depth as float32 `.npy` files in meters, and instance segmentation as
+  16-bit grayscale PNGs.
 
-```bash
+## Setup
+
+In the Python environment that runs ComfyUI:
+
+```sh
 cd ComfyUI/custom_nodes
-git clone <repository-url> comfyui-sim2real
+git clone https://github.com/stevencheng1220/comfyui-sim2real.git
 cd comfyui-sim2real
 pip install -e .
 ```
 
-Restart ComfyUI. ComfyUI loads the repository's root `__init__.py`, which imports the nodes from
-the installed `comfyui_sim2real` package; without `pip install -e .` that import fails and the
-nodes do not register. The install pulls in no runtime dependencies: torch, numpy and Pillow come
-from ComfyUI's own environment.
+Restart ComfyUI. The four nodes appear under the `sim2real` category.
 
-## Layout
+## Usage
 
+In a ComfyUI graph:
+
+```text
+LoadDepthNPY (depth.npy)      → SimDepthToControlNet → Apply ControlNet (depth model)
+LoadSegmentationPNG (seg.png) → InstanceSegToADE20K  → Apply ControlNet (segmentation model)
 ```
-__init__.py                 ComfyUI entry shim (NODE_CLASS_MAPPINGS, NODE_DISPLAY_NAME_MAPPINGS)
-src/comfyui_sim2real/
-    nodes.py                node implementations
-    ade20k_palette.py       ADE20K 150-class palette and class names
-tests/                      pytest suite
+
+The nodes are plain Python classes, so the depth path also runs outside ComfyUI. With a frame at
+`depth/frame_000001.npy`:
+
+```sh
+python - <<'EOF'
+from comfyui_sim2real import LoadDepthNPY, SimDepthToControlNet
+(depth,) = LoadDepthNPY().load("depth/frame_000001.npy")
+(cond,) = SimDepthToControlNet().convert(depth, near=0.1, far=10.0)
+print(tuple(depth.shape), "->", tuple(cond.shape), f"min={cond.min():.3f} max={cond.max():.3f}")
+EOF
 ```
+
+```text
+(1, 480, 640, 1) -> (1, 480, 640, 3) min=0.000 max=0.960
+```
+
+## Development
+
+```sh
+git clone https://github.com/stevencheng1220/comfyui-sim2real.git
+cd comfyui-sim2real
+python3.12 -m venv .venv
+.venv/bin/pip install torch --index-url https://download.pytorch.org/whl/cpu
+.venv/bin/pip install -e '.[dev]'
+.venv/bin/ruff check .
+.venv/bin/ruff format --check .
+.venv/bin/lint-imports
+.venv/bin/pytest
+```
+
+The CPU torch line keeps Linux from downloading the CUDA build; skip it on macOS. CI runs the same
+four checks on every push. Agent rules are in [`CLAUDE.md`](CLAUDE.md).
 
 ## Nodes
 
-All nodes appear under the `sim2real` category.
-
 ### LoadDepthNPY
 
-Loads metric depth maps from NumPy .npy files (as exported by Isaac Sim).
+Loads a metric depth map from a `.npy` file.
 
-**Inputs:**
-- `file_path` (STRING): Path to .npy depth file
-
-**Output:**
-- `depth` (IMAGE): Depth tensor [1, H, W, 1] in meters
-
-### LoadSegmentationPNG
-
-Loads 16-bit PNG instance segmentation maps. Rejects non-PNG files and PNGs that are not 16-bit
-grayscale (mode `I;16`).
-
-**Inputs:**
-- `file_path` (STRING): Path to 16-bit PNG segmentation file
-
-**Output:**
-- `segmentation` (SEGMENTATION): Segmentation tensor [1, H, W] with int32 instance IDs
-
-### InstanceSegToADE20K
-
-Colors an instance segmentation map with the ADE20K palette for segmentation ControlNets.
-
-**Inputs:**
-- `segmentation` (SEGMENTATION): Instance segmentation from LoadSegmentationPNG
-- `id_to_class` (STRING): JSON object mapping instance IDs to ADE20K class IDs (1-150),
-  e.g. `{"1": 1, "2": 35, "3": 13}`
-
-Instance ID 0 is always background (black) and cannot be mapped. Any instance ID present in the
-map but missing from `id_to_class` raises an error.
-
-**Output:**
-- `segmentation_ade20k` (IMAGE): RGB tensor [1, H, W, 3] in [0, 1]
+- Input `file_path` (STRING): path to the `.npy` file; non-float32 arrays are cast to float32.
+- Output `depth` (IMAGE): tensor `[1, H, W, 1]` in meters.
 
 ### SimDepthToControlNet
 
-Converts metric depth maps (float32 meters) to ControlNet-compatible format.
+Converts metric depth to ControlNet depth: clips to `[near, far]`, normalizes, and inverts so near
+is white and far is black.
 
-**Inputs:**
-- `depth` (IMAGE): Metric depth map from LoadDepthNPY
-- `near` (FLOAT): Near clipping distance in meters (default: 0.1)
-- `far` (FLOAT): Far clipping distance in meters (default: 10.0)
+- Input `depth` (IMAGE): from `LoadDepthNPY`; a 3-channel input uses its first channel.
+- Input `near` (FLOAT, default `0.1`) and `far` (FLOAT, default `10.0`): clipping distances in
+  meters; `near` must be less than `far`.
+- Output `depth_controlnet` (IMAGE): tensor `[B, H, W, 3]` in `[0, 1]`.
 
-**Output:**
-- `depth_controlnet` (IMAGE): Normalized depth for ControlNet (white=near, black=far)
+### LoadSegmentationPNG
 
-## Workflow
+Loads an instance segmentation map. Rejects anything but a 16-bit grayscale PNG (mode `I;16`),
+since 8 bits cannot hold the instance ids.
 
-```
-LoadDepthNPY (depth.npy) → SimDepthToControlNet → Apply ControlNet (depth model)
-LoadSegmentationPNG (seg.png) → InstanceSegToADE20K → Apply ControlNet (segmentation model)
-```
+- Input `file_path` (STRING): path to the PNG.
+- Output `segmentation` (SEGMENTATION): tensor `[1, H, W]` of int32 instance ids.
 
-## Development Setup
+### InstanceSegToADE20K
 
-```bash
-# Clone the repository
-git clone <repository-url> comfyui-sim2real
-cd comfyui-sim2real
+Colors an instance map with the ADE20K palette for segmentation ControlNets.
 
-# Create a Python 3.12+ virtual environment
-python3.12 -m venv .venv
-source .venv/bin/activate
+- Input `segmentation` (SEGMENTATION): from `LoadSegmentationPNG`.
+- Input `id_to_class` (STRING): JSON object mapping instance ids to ADE20K class ids 1–150, for
+  example `{"1": 1, "2": 35, "3": 13}`. Class names are in
+  `src/comfyui_sim2real/ade20k_palette.py`.
+- Output `segmentation_ade20k` (IMAGE): RGB tensor `[1, H, W, 3]` in `[0, 1]`.
 
-# Install in editable mode with dev dependencies (torch, numpy, Pillow, pytest, ruff)
-pip install -e ".[dev]"
-
-# Lint and test
-ruff check .
-pytest
-```
-
-pytest puts `src/` on the import path (`pythonpath` in `pyproject.toml`), so the tests import the
-working tree directly.
-
-## Dependencies
-
-The package declares no runtime dependencies. ComfyUI provides torch, numpy, and Pillow at
-runtime; the `dev` extra installs them for local testing.
+Instance id 0 is always background (black) and cannot be mapped. Any other id in the map that is
+missing from `id_to_class` raises an error.

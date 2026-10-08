@@ -22,10 +22,13 @@ class LoadDepthNPY:
     def INPUT_TYPES(cls):
         return {
             "required": {
-                "file_path": ("STRING", {
-                    "default": "",
-                    "tooltip": "Path to .npy depth file (float32 meters)",
-                }),
+                "file_path": (
+                    "STRING",
+                    {
+                        "default": "",
+                        "tooltip": "Path to .npy depth file (float32 meters)",
+                    },
+                ),
             }
         }
 
@@ -72,20 +75,31 @@ class SimDepthToControlNet:
         return {
             "required": {
                 "depth": ("IMAGE",),
-                "near": ("FLOAT", {
-                    "default": 0.1,
-                    "min": 0.0,
-                    "max": 1000.0,
-                    "step": 0.1,
-                    "tooltip": "Near clipping distance in meters. Depths closer than this become white.",
-                }),
-                "far": ("FLOAT", {
-                    "default": 10.0,
-                    "min": 0.1,
-                    "max": 1000.0,
-                    "step": 0.1,
-                    "tooltip": "Far clipping distance in meters. Depths beyond this become black.",
-                }),
+                "near": (
+                    "FLOAT",
+                    {
+                        "default": 0.1,
+                        "min": 0.0,
+                        "max": 1000.0,
+                        "step": 0.1,
+                        "tooltip": (
+                            "Near clipping distance in meters. "
+                            "Depths closer than this become white."
+                        ),
+                    },
+                ),
+                "far": (
+                    "FLOAT",
+                    {
+                        "default": 10.0,
+                        "min": 0.1,
+                        "max": 1000.0,
+                        "step": 0.1,
+                        "tooltip": (
+                            "Far clipping distance in meters. Depths beyond this become black."
+                        ),
+                    },
+                ),
             }
         }
 
@@ -93,7 +107,9 @@ class SimDepthToControlNet:
     RETURN_NAMES = ("depth_controlnet",)
     FUNCTION = "convert"
     CATEGORY = "sim2real"
-    DESCRIPTION = "Converts metric depth (meters) to ControlNet depth format (white=near, black=far)"
+    DESCRIPTION = (
+        "Converts metric depth (meters) to ControlNet depth format (white=near, black=far)"
+    )
 
     def convert(
         self,
@@ -283,13 +299,9 @@ class InstanceSegToADE20K:
                 f"got {segmentation.dim()}D tensor with shape {list(segmentation.shape)}"
             )
         if segmentation.shape[0] != 1:
-            raise ValueError(
-                f"Expected batch size 1, got {segmentation.shape[0]}"
-            )
+            raise ValueError(f"Expected batch size 1, got {segmentation.shape[0]}")
         if segmentation.dtype != torch.int32:
-            raise ValueError(
-                f"Expected int32 segmentation tensor, got {segmentation.dtype}"
-            )
+            raise ValueError(f"Expected int32 segmentation tensor, got {segmentation.dtype}")
 
         # Parse JSON mapping
         try:
@@ -298,19 +310,17 @@ class InstanceSegToADE20K:
             raise ValueError(f"Invalid JSON in id_to_class: {e}") from e
 
         if not isinstance(mapping_raw, dict):
-            raise ValueError(
-                f"id_to_class must be a JSON object, got {type(mapping_raw).__name__}"
-            )
+            raise ValueError(f"id_to_class must be a JSON object, got {type(mapping_raw).__name__}")
 
         # Convert string keys to int and validate class IDs
         mapping: dict[int, int] = {}
         for instance_id_str, class_id in mapping_raw.items():
             try:
                 instance_id = int(instance_id_str)
-            except ValueError:
+            except ValueError as exc:
                 raise ValueError(
                     f"Instance ID must be an integer, got: {instance_id_str!r}"
-                )
+                ) from exc
 
             if not isinstance(class_id, int):
                 raise ValueError(

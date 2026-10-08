@@ -3,7 +3,6 @@
 FrameExporter writes one float32-meters array per frame to ``depth/frame_NNNNNN.npy``.
 """
 
-
 import numpy as np
 import pytest
 import torch
@@ -48,9 +47,7 @@ class TestExportedDepthPipeline:
         assert depth_tensor.shape == (1, 1024, 1024, 1)
         assert depth_tensor.dtype == torch.float32
         np.testing.assert_array_almost_equal(
-            depth_tensor[0, :, :, 0].numpy(),
-            original_depth,
-            decimal=5
+            depth_tensor[0, :, :, 0].numpy(), original_depth, decimal=5
         )
 
         # Step 2: Convert to ControlNet format
@@ -59,7 +56,7 @@ class TestExportedDepthPipeline:
         controlnet_depth = normalizer.convert(
             depth_tensor,
             near=0.1,  # SimDepthToControlNet default
-            far=10.0   # SimDepthToControlNet default
+            far=10.0,  # SimDepthToControlNet default
         )[0]
 
         # Verify output format
@@ -79,8 +76,9 @@ class TestExportedDepthPipeline:
         wall_region = controlnet_depth[0, 300:700, 400:600, 0]
         far_region = controlnet_depth[0, 0:200, 0:200, 0]
 
-        assert wall_region.mean() > far_region.mean(), \
+        assert wall_region.mean() > far_region.mean(), (
             "Closer objects (wall) should be brighter than far objects"
+        )
 
     def test_batch_export_simulation(self, tmp_path):
         """Test processing several frames named as FrameExporter writes them."""
@@ -125,10 +123,13 @@ class TestExportedDepthPipeline:
         # - Most values in 1-10m range (typical indoor/climbing scene)
         # - Some outliers at max depth (sky/background)
         # - Float32 precision
-        depth_data = np.concatenate([
-            np.random.uniform(1.5, 8.0, (512, 256)),    # Foreground
-            np.random.uniform(8.0, 20.0, (512, 256)),   # Background
-        ], axis=1).astype(np.float32)
+        depth_data = np.concatenate(
+            [
+                np.random.uniform(1.5, 8.0, (512, 256)),  # Foreground
+                np.random.uniform(8.0, 20.0, (512, 256)),  # Background
+            ],
+            axis=1,
+        ).astype(np.float32)
 
         depth_path = depth_dir / "frame_000001.npy"
         np.save(depth_path, depth_data)
@@ -145,12 +146,12 @@ class TestExportedDepthPipeline:
         foreground = controlnet[0, :, :256, 0]
         background = controlnet[0, :, 256:, 0]
 
-        assert foreground.mean() > background.mean(), \
+        assert foreground.mean() > background.mean(), (
             "Foreground should be brighter than background after inversion"
+        )
 
         # Background spans 8-20m; values at or beyond far (10m) clip to 10m,
         # normalize to 1.0 and invert to 0.0 (black)
         far_pixels = controlnet[0, 0, 256:, 0]  # Background pixels
         # Many should be close to 0 (far clipping)
-        assert (far_pixels < 0.1).sum() > 0, \
-            "Some far pixels should be clipped to black"
+        assert (far_pixels < 0.1).sum() > 0, "Some far pixels should be clipped to black"

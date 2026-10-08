@@ -1,6 +1,5 @@
 """Unit tests for comfyui-sim2real nodes."""
 
-
 import numpy as np
 import pytest
 import torch
@@ -32,9 +31,7 @@ class TestLoadDepthNPY:
         assert output.shape == (1, 1024, 1024, 1)
         assert output.dtype == torch.float32
 
-        np.testing.assert_array_almost_equal(
-            output[0, :, :, 0].numpy(), depth_data
-        )
+        np.testing.assert_array_almost_equal(output[0, :, :, 0].numpy(), depth_data)
 
     def test_load_converts_dtype(self, node, tmp_path):
         """Test that non-float32 arrays are converted."""
@@ -245,7 +242,7 @@ class TestLoadSegmentationPNG:
         assert output.dtype == torch.int32
         np.testing.assert_array_equal(
             output[0].numpy(),
-            original_int32  # Should match original values exactly
+            original_int32,  # Should match original values exactly
         )
 
 
