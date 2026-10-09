@@ -13,7 +13,8 @@
 
 Four ComfyUI custom nodes (Python 3.12, torch, NumPy, Pillow) that convert simulator depth and
 instance segmentation into ControlNet conditioning. Installed editable into ComfyUI's environment;
-no runtime dependencies of its own. Setup and node reference: `README.md`.
+no runtime dependencies of its own. Setup: README `## Setup`; node inputs, outputs, and value
+ranges: README `## Nodes`.
 
 ## Commands
 
@@ -51,9 +52,5 @@ Flow: ComfyUI imports the root `__init__.py` by file path → it imports the ins
   environment the root import fails and no node registers.
 - Tests import from `src/` through `pythonpath` → they pass without an install, so a passing suite
   does not prove ComfyUI can load the package.
-- `pip install -e '.[dev]'` on Linux pulls the multi-GB CUDA torch → install the CPU wheel first,
-  as CI does.
 - ControlNet depth uses the MiDaS convention (white = near) and expects 3 channels → keep the
   inversion and the RGB expand when changing `SimDepthToControlNet`.
-- `id_to_class` keys are JSON strings and values must be integers 1–150 → class 0 is background
-  and is assigned automatically to instance id 0.
