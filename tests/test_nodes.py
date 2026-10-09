@@ -4,7 +4,7 @@ import numpy as np
 import pytest
 import torch
 
-from comfyui_sim2real.nodes import (
+from comfyui_sim2real.service import (
     InstanceSegToADE20K,
     LoadDepthNPY,
     LoadSegmentationPNG,
@@ -266,7 +266,7 @@ class TestInstanceSegToADE20K:
 
     def test_valid_mapping(self, node, sample_segmentation):
         """Test that valid mapping produces correct ADE20K colors."""
-        from comfyui_sim2real.ade20k_palette import ADE20K_PALETTE
+        from comfyui_sim2real.constants import ADE20K_PALETTE
 
         # Map: 1->wall(1), 2->rock(35), 3->person(13)
         id_to_class = '{"1": 1, "2": 35, "3": 13}'

@@ -32,15 +32,15 @@ Flow: ComfyUI imports the root `__init__.py` by file path → it imports the ins
 `FUNCTION` method with its `INPUT_TYPES`.
 
 - `__init__.py` (repo root) — ComfyUI entry shim: node mappings and display names only.
-- `src/comfyui_sim2real/` — node classes; `ade20k_palette.py` is a data table that imports
-  nothing.
+- `src/comfyui_sim2real/` — node classes in `service.py`; `constants.py` is the ADE20K palette
+  table and imports nothing.
 - `tests/` — unit tests per node and an end-to-end depth test on synthetic frames in the simulator
   export layout (`depth/frame_NNNNNN.npy`).
 
 ## Conventions
 
-- A new node is added in three places: its class in `nodes.py`, the package `__init__.py`
-  exports, and both mappings in the root `__init__.py`.
+- A new node is added in two places: its class in `service.py` and both mappings in the root
+  `__init__.py`.
 - Tensors follow ComfyUI's layout: IMAGE is `[B, H, W, C]` float32 in `[0, 1]` (depth stays in
   meters until `SimDepthToControlNet`); SEGMENTATION is this package's own `[1, H, W]` int32 type.
 - Tests build their inputs with NumPy and Pillow in `tmp_path`; never commit simulator frames.

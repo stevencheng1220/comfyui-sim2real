@@ -7,7 +7,7 @@ pip-installed into ComfyUI's Python environment (``pip install -e .``) for the i
 below to resolve.
 """
 
-from comfyui_sim2real import (
+from comfyui_sim2real.service import (
     InstanceSegToADE20K,
     LoadDepthNPY,
     LoadSegmentationPNG,

@@ -35,7 +35,7 @@ The nodes are plain Python classes, so the depth path also runs outside ComfyUI.
 
 ```sh
 python - <<'EOF'
-from comfyui_sim2real import LoadDepthNPY, SimDepthToControlNet
+from comfyui_sim2real.service import LoadDepthNPY, SimDepthToControlNet
 (depth,) = LoadDepthNPY().load("depth/frame_000001.npy")
 (cond,) = SimDepthToControlNet().convert(depth, near=0.1, far=10.0)
 print(tuple(depth.shape), "->", tuple(cond.shape), f"min={cond.min():.3f} max={cond.max():.3f}")
@@ -97,7 +97,7 @@ Colors an instance map with the ADE20K palette for segmentation ControlNets.
 - Input `segmentation` (SEGMENTATION): from `LoadSegmentationPNG`.
 - Input `id_to_class` (STRING): JSON object mapping instance ids to ADE20K class ids 1–150, for
   example `{"1": 1, "2": 35, "3": 13}`. Class names are in
-  `src/comfyui_sim2real/ade20k_palette.py`.
+  `src/comfyui_sim2real/constants.py`.
 - Output `segmentation_ade20k` (IMAGE): RGB tensor `[1, H, W, 3]` in `[0, 1]`.
 
 Instance id 0 is always background (black) and cannot be mapped. Any other id in the map that is
