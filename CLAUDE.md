@@ -34,7 +34,7 @@ Flow: ComfyUI imports the root `__init__.py` by file path → it imports the ins
 
 - `__init__.py` (repo root) — ComfyUI entry shim: node mappings and display names only.
 - `src/comfyui_sim2real/` — node classes in `service.py`; `constants.py` is the ADE20K palette
-  table and imports nothing.
+  table.
 - `tests/` — unit tests per node and an end-to-end depth test on synthetic frames in the simulator
   export layout (`depth/frame_NNNNNN.npy`).
 
