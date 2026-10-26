@@ -92,4 +92,4 @@ NUM_CLASSES = 150
 
 # Full palette with class 0 (background) prepended: 151 entries total
 # Index directly with ADE20K class ID (0-150)
-ADE20K_PALETTE = [[0, 0, 0]] + _ADE20K_PALETTE_150
+ADE20K_PALETTE = [[0, 0, 0], *_ADE20K_PALETTE_150]

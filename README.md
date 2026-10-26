@@ -51,17 +51,16 @@ EOF
 ```sh
 git clone https://github.com/stevencheng1220/comfyui-sim2real.git
 cd comfyui-sim2real
-python3.12 -m venv .venv
-.venv/bin/pip install torch --index-url https://download.pytorch.org/whl/cpu
-.venv/bin/pip install -e '.[dev]'
-.venv/bin/ruff check .
-.venv/bin/ruff format --check .
-.venv/bin/lint-imports
-.venv/bin/pytest
+uv sync --inexact --locked --extra dev
+uv run ruff check .
+uv run ruff format --check .
+uv run lint-imports
+uv run mypy
+uv run pytest
 ```
 
-The CPU torch line keeps Linux from downloading the CUDA build; skip it on macOS. CI runs the same
-four checks on every push. Agent rules are in [`CLAUDE.md`](CLAUDE.md).
+`uv.lock` takes torch's CPU-only build on Linux and PyPI's on macOS. CI runs these checks, a
+dependency audit, and a secret scan on every push. Agent rules are in [`CLAUDE.md`](CLAUDE.md).
 
 ## Nodes
 
