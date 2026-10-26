@@ -1,6 +1,6 @@
 [build-system]
-requires = ["hatchling"]
-build-backend = "hatchling.build"
+requires = ["uv_build>=0.13,<0.14"]
+build-backend = "uv_build"
 
 [project]
 name = "comfyui-sim2real"
@@ -19,18 +19,45 @@ dependencies = []  # ComfyUI provides torch/numpy/PIL at runtime
 [project.optional-dependencies]
 dev = [
     "import-linter>=2.15",
-    "pytest>=8.0",
+    "mypy>=2.4,<2.5",
+    "pip-audit>=2.10",
+    "pytest>=9.1",
     "ruff>=0.16,<0.17",
     "torch>=2.0.0",
     "numpy>=1.24.0",
     "pillow>=10.0.0",
 ]
 
+# Linux takes the CPU-only torch build instead of PyPI's CUDA one; macOS uses PyPI.
+[tool.uv.sources]
+torch = [
+    { index = "pytorch-cpu", marker = "sys_platform == 'linux'" },
+]
+
+[[tool.uv.index]]
+name = "pytorch-cpu"
+url = "https://download.pytorch.org/whl/cpu"
+explicit = true
+
+[tool.mypy]
+files = ["src", "tests"]
+strict = true
+enable_error_code = ["ignore-without-code"]
+# The repo root holds ComfyUI's loaded-by-path __init__.py under a non-identifier directory
+# name; anchoring module names at src/ and tests/ stops mypy crawling up into it.
+mypy_path = ["src", "tests"]
+explicit_package_bases = true
+
 [tool.ruff]
 line-length = 100
 
 [tool.ruff.lint]
-select = ["E", "F", "I", "UP", "B", "SIM"]
+select = ["E", "F", "I", "UP", "B", "SIM", "ANN", "S", "RUF", "PT", "C4", "RET", "ARG", "PTH"]
+ignore = []
+
+[tool.ruff.lint.per-file-ignores]
+# Tests assert and request fixtures for their side effects.
+"tests/**" = ["S101", "ARG001"]
 
 [tool.importlinter]
 root_package = "comfyui_sim2real"
@@ -49,6 +76,4 @@ layers = [
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 pythonpath = ["src"]
-
-[tool.hatch.build.targets.wheel]
-packages = ["src/comfyui_sim2real"]
+strict = true
