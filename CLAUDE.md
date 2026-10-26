@@ -19,11 +19,9 @@ ranges: README `## Nodes`.
 ## Commands
 
 ```sh
-python3.12 -m venv .venv
-.venv/bin/pip install torch --index-url https://download.pytorch.org/whl/cpu   # Linux only
-.venv/bin/pip install -e '.[dev]'
-.venv/bin/ruff check . && .venv/bin/ruff format --check . && .venv/bin/lint-imports
-.venv/bin/pytest
+uv sync --inexact --locked --extra dev
+uv run ruff check . && uv run ruff format --check . && uv run lint-imports && uv run mypy
+uv run pytest
 ```
 
 ## Architecture
