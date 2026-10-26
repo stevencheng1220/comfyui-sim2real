@@ -10,6 +10,10 @@ Nodes:
 import numpy as np
 import torch
 
+# ComfyUI reads INPUT_TYPES as {"required": {socket name: (type name,) or (type name, options)}}.
+type InputSocket = tuple[str] | tuple[str, dict[str, object]]
+type InputTypes = dict[str, dict[str, InputSocket]]
+
 
 class LoadDepthNPY:
     """Load metric depth map from NumPy binary file.
@@ -19,7 +23,7 @@ class LoadDepthNPY:
     """
 
     @classmethod
-    def INPUT_TYPES(cls):
+    def INPUT_TYPES(cls) -> InputTypes:
         return {
             "required": {
                 "file_path": (
@@ -71,7 +75,7 @@ class SimDepthToControlNet:
     """
 
     @classmethod
-    def INPUT_TYPES(cls):
+    def INPUT_TYPES(cls) -> InputTypes:
         return {
             "required": {
                 "depth": ("IMAGE",),
@@ -163,7 +167,7 @@ class LoadSegmentationPNG:
     """
 
     @classmethod
-    def INPUT_TYPES(cls):
+    def INPUT_TYPES(cls) -> InputTypes:
         return {
             "required": {
                 "file_path": (
@@ -247,7 +251,7 @@ class InstanceSegToADE20K:
     """
 
     @classmethod
-    def INPUT_TYPES(cls):
+    def INPUT_TYPES(cls) -> InputTypes:
         return {
             "required": {
                 "segmentation": ("SEGMENTATION",),

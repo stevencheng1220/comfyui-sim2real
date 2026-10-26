@@ -1,6 +1,9 @@
 """Unit tests for comfyui-sim2real nodes."""
 
+from pathlib import Path
+
 import numpy as np
+import numpy.typing as npt
 import pytest
 import torch
 
@@ -11,15 +14,18 @@ from comfyui_sim2real.service import (
     SimDepthToControlNet,
 )
 
+# A written 16-bit segmentation PNG and the instance ids it holds.
+type SegmentationFile = tuple[Path, npt.NDArray[np.uint16]]
+
 
 class TestLoadDepthNPY:
     """Tests for LoadDepthNPY node."""
 
     @pytest.fixture
-    def node(self):
+    def node(self) -> LoadDepthNPY:
         return LoadDepthNPY()
 
-    def test_load_depth_file(self, node, tmp_path):
+    def test_load_depth_file(self, node: LoadDepthNPY, tmp_path: Path) -> None:
         """Test loading a valid NPY depth file."""
         depth_data = np.random.rand(1024, 1024).astype(np.float32) * 10
         file_path = tmp_path / "depth.npy"
@@ -33,7 +39,7 @@ class TestLoadDepthNPY:
 
         np.testing.assert_array_almost_equal(output[0, :, :, 0].numpy(), depth_data)
 
-    def test_load_converts_dtype(self, node, tmp_path):
+    def test_load_converts_dtype(self, node: LoadDepthNPY, tmp_path: Path) -> None:
         """Test that non-float32 arrays are converted."""
         depth_data = np.random.rand(64, 64).astype(np.float64)
         file_path = tmp_path / "depth.npy"
@@ -47,10 +53,10 @@ class TestSimDepthToControlNet:
     """Tests for SimDepthToControlNet node."""
 
     @pytest.fixture
-    def node(self):
+    def node(self) -> SimDepthToControlNet:
         return SimDepthToControlNet()
 
-    def test_basic_normalization(self, node):
+    def test_basic_normalization(self, node: SimDepthToControlNet) -> None:
         """Test that depth values are correctly normalized and inverted."""
         # Create depth tensor: values from 1m to 10m
         depth = torch.tensor([[[[1.0], [5.5], [10.0]]]])  # [1, 1, 3, 1]
@@ -65,27 +71,27 @@ class TestSimDepthToControlNet:
         # far (10m) should become black (0.0)
         assert torch.isclose(output[0, 0, 2, 0], torch.tensor(0.0), atol=1e-6)
 
-    def test_clipping_near(self, node):
+    def test_clipping_near(self, node: SimDepthToControlNet) -> None:
         """Test that values below near are clipped."""
         depth = torch.tensor([[[[0.1]]]])  # Below near
         result = node.convert(depth, near=1.0, far=10.0)
         # Should be clipped to near, which inverts to 1.0 (white)
         assert torch.isclose(result[0][0, 0, 0, 0], torch.tensor(1.0), atol=1e-6)
 
-    def test_clipping_far(self, node):
+    def test_clipping_far(self, node: SimDepthToControlNet) -> None:
         """Test that values above far are clipped."""
         depth = torch.tensor([[[[100.0]]]])  # Above far
         result = node.convert(depth, near=1.0, far=10.0)
         # Should be clipped to far, which inverts to 0.0 (black)
         assert torch.isclose(result[0][0, 0, 0, 0], torch.tensor(0.0), atol=1e-6)
 
-    def test_rgb_output(self, node):
+    def test_rgb_output(self, node: SimDepthToControlNet) -> None:
         """Test that output has 3 channels (RGB)."""
         depth = torch.ones(1, 64, 64, 1)
         result = node.convert(depth, near=0.5, far=20.0)
         assert result[0].shape == (1, 64, 64, 3)
 
-    def test_rgb_input_handling(self, node):
+    def test_rgb_input_handling(self, node: SimDepthToControlNet) -> None:
         """Test that RGB input (R=G=B) is handled correctly."""
         depth_single = torch.full((1, 64, 64, 1), 5.0)
         depth_rgb = torch.full((1, 64, 64, 3), 5.0)
@@ -95,23 +101,23 @@ class TestSimDepthToControlNet:
 
         assert torch.allclose(result_single[0], result_rgb[0])
 
-    def test_invalid_near_far(self, node):
+    def test_invalid_near_far(self, node: SimDepthToControlNet) -> None:
         """Test that near >= far raises error."""
         depth = torch.ones(1, 64, 64, 1)
 
-        with pytest.raises(ValueError, match="near.*must be less than far"):
+        with pytest.raises(ValueError, match=r"near.*must be less than far"):
             node.convert(depth, near=10.0, far=5.0)
 
-        with pytest.raises(ValueError, match="near.*must be less than far"):
+        with pytest.raises(ValueError, match=r"near.*must be less than far"):
             node.convert(depth, near=5.0, far=5.0)
 
-    def test_batch_processing(self, node):
+    def test_batch_processing(self, node: SimDepthToControlNet) -> None:
         """Test that batched inputs are handled correctly."""
         depth = torch.rand(4, 128, 128, 1) * 10 + 1  # [4, 128, 128, 1], range 1-11
         result = node.convert(depth, near=1.0, far=10.0)
         assert result[0].shape == (4, 128, 128, 3)
 
-    def test_output_range(self, node):
+    def test_output_range(self, node: SimDepthToControlNet) -> None:
         """Test that output values are in [0, 1] range."""
         depth = torch.rand(1, 256, 256, 1) * 100  # Random depths 0-100m
         result = node.convert(depth, near=0.5, far=20.0)
@@ -122,7 +128,7 @@ class TestSimDepthToControlNet:
 class TestEndToEnd:
     """End-to-end tests chaining LoadDepthNPY into SimDepthToControlNet."""
 
-    def test_load_and_normalize(self, tmp_path):
+    def test_load_and_normalize(self, tmp_path: Path) -> None:
         """Test loading NPY and normalizing in sequence."""
         # Create test depth file with known values
         depth_data = np.array([[5.0, 10.0], [15.0, 20.0]], dtype=np.float32)
@@ -149,11 +155,11 @@ class TestLoadSegmentationPNG:
     """Tests for LoadSegmentationPNG node."""
 
     @pytest.fixture
-    def node(self):
+    def node(self) -> LoadSegmentationPNG:
         return LoadSegmentationPNG()
 
     @pytest.fixture
-    def sample_segmentation_file(self, tmp_path):
+    def sample_segmentation_file(self, tmp_path: Path) -> SegmentationFile:
         """Create a valid 16-bit PNG segmentation file."""
         from PIL import Image
 
@@ -168,7 +174,9 @@ class TestLoadSegmentationPNG:
 
         return file_path, seg_data
 
-    def test_load_valid_16bit_png(self, node, sample_segmentation_file):
+    def test_load_valid_16bit_png(
+        self, node: LoadSegmentationPNG, sample_segmentation_file: SegmentationFile
+    ) -> None:
         """Test loading a valid 16-bit PNG returns correct tensor."""
         file_path, expected_data = sample_segmentation_file
 
@@ -179,7 +187,9 @@ class TestLoadSegmentationPNG:
         assert output.dtype == torch.int32
         np.testing.assert_array_equal(output[0].numpy(), expected_data.astype(np.int32))
 
-    def test_preserves_instance_ids(self, node, sample_segmentation_file):
+    def test_preserves_instance_ids(
+        self, node: LoadSegmentationPNG, sample_segmentation_file: SegmentationFile
+    ) -> None:
         """Test that instance IDs including max value are preserved."""
         file_path, _ = sample_segmentation_file
 
@@ -192,12 +202,12 @@ class TestLoadSegmentationPNG:
         assert 2 in unique_ids  # Instance 2
         assert 65535 in unique_ids  # Max uint16
 
-    def test_file_not_found_raises_error(self, node, tmp_path):
+    def test_file_not_found_raises_error(self, node: LoadSegmentationPNG, tmp_path: Path) -> None:
         """Test that missing file raises FileNotFoundError."""
         with pytest.raises(FileNotFoundError, match="not found"):
             node.load(str(tmp_path / "nonexistent.png"))
 
-    def test_non_png_file_raises_error(self, node, tmp_path):
+    def test_non_png_file_raises_error(self, node: LoadSegmentationPNG, tmp_path: Path) -> None:
         """Test that non-PNG files raise ValueError."""
         file_path = tmp_path / "test.jpg"
         file_path.touch()
@@ -205,7 +215,7 @@ class TestLoadSegmentationPNG:
         with pytest.raises(ValueError, match="Expected PNG"):
             node.load(str(file_path))
 
-    def test_8bit_png_raises_error(self, node, tmp_path):
+    def test_8bit_png_raises_error(self, node: LoadSegmentationPNG, tmp_path: Path) -> None:
         """Test that 8-bit PNG raises ValueError."""
         from PIL import Image
 
@@ -217,7 +227,9 @@ class TestLoadSegmentationPNG:
         with pytest.raises(ValueError, match="16-bit grayscale"):
             node.load(str(file_path))
 
-    def test_roundtrip_matches_generator_export_format(self, node, tmp_path):
+    def test_roundtrip_matches_generator_export_format(
+        self, node: LoadSegmentationPNG, tmp_path: Path
+    ) -> None:
         """Test round-trip with the isaac-simulator FrameExporter segmentation format.
 
         FrameExporter (generator/src/isaac_simulator_generator/exporter.py in
@@ -250,11 +262,11 @@ class TestInstanceSegToADE20K:
     """Tests for InstanceSegToADE20K node."""
 
     @pytest.fixture
-    def node(self):
+    def node(self) -> InstanceSegToADE20K:
         return InstanceSegToADE20K()
 
     @pytest.fixture
-    def sample_segmentation(self):
+    def sample_segmentation(self) -> torch.Tensor:
         """Create a sample segmentation tensor with known instance IDs."""
         # [1, H, W] int32 tensor with instances 0 (bg), 1, 2, 3
         seg = np.zeros((4, 4), dtype=np.int32)
@@ -264,7 +276,9 @@ class TestInstanceSegToADE20K:
         seg[3, :] = 3  # Instance 3 (row 3)
         return torch.from_numpy(seg).unsqueeze(0)  # [1, 4, 4]
 
-    def test_valid_mapping(self, node, sample_segmentation):
+    def test_valid_mapping(
+        self, node: InstanceSegToADE20K, sample_segmentation: torch.Tensor
+    ) -> None:
         """Test that valid mapping produces correct ADE20K colors."""
         from comfyui_sim2real.constants import ADE20K_PALETTE
 
@@ -294,22 +308,28 @@ class TestInstanceSegToADE20K:
         # Row 3: instance 3 -> class 13 (person) -> palette[13]
         np.testing.assert_array_equal(rgb_uint8[3, 0], ADE20K_PALETTE[13])
 
-    def test_unmapped_instance_raises_error(self, node, sample_segmentation):
+    def test_unmapped_instance_raises_error(
+        self, node: InstanceSegToADE20K, sample_segmentation: torch.Tensor
+    ) -> None:
         """Test that unmapped instance IDs raise ValueError."""
         # Only map instance 1, leaving 2 and 3 unmapped
         id_to_class = '{"1": 1}'
 
-        with pytest.raises(ValueError, match="Unmapped instance IDs.*2.*3"):
+        with pytest.raises(ValueError, match=r"Unmapped instance IDs.*2.*3"):
             node.convert(sample_segmentation, id_to_class)
 
-    def test_invalid_json_raises_error(self, node, sample_segmentation):
+    def test_invalid_json_raises_error(
+        self, node: InstanceSegToADE20K, sample_segmentation: torch.Tensor
+    ) -> None:
         """Test that invalid JSON raises ValueError."""
         with pytest.raises(ValueError, match="Invalid JSON"):
             node.convert(sample_segmentation, "not valid json")
 
-    def test_class_id_out_of_range_raises_error(self, node, sample_segmentation):
+    def test_class_id_out_of_range_raises_error(
+        self, node: InstanceSegToADE20K, sample_segmentation: torch.Tensor
+    ) -> None:
         """Test that ADE20K class ID > 150 raises ValueError."""
         id_to_class = '{"1": 151, "2": 35, "3": 13}'
 
-        with pytest.raises(ValueError, match="range.*1.*150"):
+        with pytest.raises(ValueError, match=r"range.*1.*150"):
             node.convert(sample_segmentation, id_to_class)

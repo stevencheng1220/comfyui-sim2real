@@ -3,18 +3,24 @@
 FrameExporter writes one float32-meters array per frame to ``depth/frame_NNNNNN.npy``.
 """
 
+from pathlib import Path
+
 import numpy as np
+import numpy.typing as npt
 import pytest
 import torch
 
 from comfyui_sim2real.service import LoadDepthNPY, SimDepthToControlNet
+
+# The export directory, the written depth frame, and the depth it holds in meters.
+type ExportedDepthFrame = tuple[Path, Path, npt.NDArray[np.float32]]
 
 
 class TestExportedDepthPipeline:
     """Load exported .npy depth frames and normalize them for ControlNet."""
 
     @pytest.fixture
-    def exported_depth_frame(self, tmp_path):
+    def exported_depth_frame(self, tmp_path: Path) -> ExportedDepthFrame:
         """Write one depth frame where FrameExporter puts it: depth/frame_000001.npy."""
         # FrameExporter writes depth frames under <output_dir>/depth/
         depth_dir = tmp_path / "depth"
@@ -35,9 +41,11 @@ class TestExportedDepthPipeline:
 
         return tmp_path, depth_path, depth_data
 
-    def test_full_pipeline_with_exported_frame(self, exported_depth_frame):
+    def test_full_pipeline_with_exported_frame(
+        self, exported_depth_frame: ExportedDepthFrame
+    ) -> None:
         """Test complete pipeline: load an exported .npy frame → normalize for ControlNet."""
-        tmp_path, depth_path, original_depth = exported_depth_frame
+        _, depth_path, original_depth = exported_depth_frame
 
         # Step 1: Load depth using LoadDepthNPY (FrameExporter .npy output)
         loader = LoadDepthNPY()
@@ -80,7 +88,7 @@ class TestExportedDepthPipeline:
             "Closer objects (wall) should be brighter than far objects"
         )
 
-    def test_batch_export_simulation(self, tmp_path):
+    def test_batch_export_simulation(self, tmp_path: Path) -> None:
         """Test processing several frames named as FrameExporter writes them."""
         depth_dir = tmp_path / "depth"
         depth_dir.mkdir()
@@ -114,7 +122,7 @@ class TestExportedDepthPipeline:
             assert result.min() >= 0.0
             assert result.max() <= 1.0
 
-    def test_realistic_depth_values(self, tmp_path):
+    def test_realistic_depth_values(self, tmp_path: Path) -> None:
         """Test with realistic depth values from Isaac Sim."""
         depth_dir = tmp_path / "depth"
         depth_dir.mkdir()
