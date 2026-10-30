@@ -10,9 +10,7 @@ Nodes:
 import numpy as np
 import torch
 
-# ComfyUI reads INPUT_TYPES as {"required": {socket name: (type name,) or (type name, options)}}.
-type InputSocket = tuple[str] | tuple[str, dict[str, object]]
-type InputTypes = dict[str, dict[str, InputSocket]]
+from comfyui_sim2real.models import InputTypes
 
 
 class LoadDepthNPY:

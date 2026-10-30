@@ -12,6 +12,7 @@ Adds ComfyUI nodes that turn simulator depth and instance segmentation into Cont
 
 In the Python environment that runs ComfyUI:
 
+<!-- host interpreter: comfyui -->
 ```sh
 cd ComfyUI/custom_nodes
 git clone https://github.com/stevencheng1220/comfyui-sim2real.git
