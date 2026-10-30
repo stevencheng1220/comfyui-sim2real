@@ -52,7 +52,7 @@ explicit_package_bases = true
 line-length = 100
 
 [tool.ruff.lint]
-select = ["E", "F", "I", "UP", "B", "SIM", "ANN", "S", "RUF", "PT", "C4", "RET", "ARG", "PTH"]
+select = ["E", "F", "I", "UP", "B", "SIM", "ANN", "S", "RUF", "PT", "C4", "RET", "ARG", "PTH", "DTZ", "PLW1510"]
 ignore = []
 
 [tool.ruff.lint.per-file-ignores]
@@ -70,10 +70,11 @@ name = "Package layers"
 type = "layers"
 layers = [
     "comfyui_sim2real.service",
+    "comfyui_sim2real.models",
     "comfyui_sim2real.constants",
 ]
 
-[tool.pytest.ini_options]
+[tool.pytest]
 testpaths = ["tests"]
 pythonpath = ["src"]
 strict = true
