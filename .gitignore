@@ -32,3 +32,8 @@ htmlcov/
 
 plans/
 .relay/
+
+# Working plans, generated relay output and local documentation categories
+/docs/technical_docs/
+/docs/research_docs/
+/docs/backlog_docs/
